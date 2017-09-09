@@ -20,12 +20,15 @@ namespace TS3AudioBot.Database
 	class DbProvider
 	{
 		private const int DbVersion = 1;
-		//private const string connectionString = "Data Source=test.sqlite;Version=3;DbLinqProvider=sqlite;DbLinqConnectionType=System.Data.SQLite.Linq.SQLiteProviderFactory;";
-		private const string connectionString =
+		private const string connectionStringNix =
+			"Data Source={0};" +
+			"Version=3;" +
+			"Database=testdb;";
+		private const string connectionStringWin =
 			"Data Source=(LocalDB)\\MSSQLLocalDB;" +
 			"AttachDbFilename={0};" +
 			"Integrated Security=True;" +
-			"Database=db2";
+			"Database=testdb;";
 		private Table<DbMetaData> DbMetaData { get; set; }
 
 		public DbProvider()
@@ -35,9 +38,20 @@ namespace TS3AudioBot.Database
 
 			//var sql2 = SQLiteProviderFactory.Instance.CreateConnection();
 			//using ()
-			var filePath = Path.GetFullPath("Database2.mdf");
-			var fullCon = string.Format(connectionString, filePath);
-			using (var sql = new SqlConnection(fullCon))
+			string fullCon;
+			string filePath;
+			if (Helper.Util.IsLinux)
+			{
+				filePath = "test.sqlite";
+				fullCon = string.Format(connectionStringNix, filePath);
+			}
+			else
+			{
+				filePath = Path.GetFullPath("test.mdf");
+				fullCon = string.Format(connectionStringWin, filePath);
+			}
+
+			using (DbConnection sql = new SqlConnection(fullCon))
 			{
 				var ctx = new TestDb(sql);
 
@@ -124,7 +138,7 @@ namespace TS3AudioBot.Database
 			ctx.SubmitChanges();*/
 
 			DbMetaData = ctx.GetTable<DbMetaData>();
-			
+
 			var versionEntry = DbMetaData.FirstOrDefault(x => x.Key == "Version");
 			//xxx.InsertOnSubmit(new Patient() { id = 1, name = "heeeloo" });
 			//ctx.SubmitChanges();
